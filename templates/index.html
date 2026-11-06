@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SEO Content Outline Generator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>SEO Content Outline Generator</h1>
+      <ol class="steps" id="stepIndicator">
+        <li data-step="1" class="active">1. Setup</li>
+        <li data-step="2">2. Pick results</li>
+        <li data-step="3">3. Headers &amp; terms</li>
+        <li data-step="4">4. Build outline</li>
+        <li data-step="5">5. Export</li>
+      </ol>
+    </header>
+
+    <main>
+      <div id="globalError" class="error-banner" hidden></div>
+
+      <!-- Step 1: Setup -->
+      <section id="step1" class="step">
+        <h2>Set up your brief</h2>
+        <div class="field">
+          <label>Page type</label>
+          <div class="segmented" id="pageTypeToggle">
+            <button type="button" class="segmented-option active" data-value="new">New page</button>
+            <button type="button" class="segmented-option" data-value="existing">Existing page</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="intent">Page intent</label>
+          <select id="intent">
+            <option value="service">Service Page</option>
+            <option value="informational" selected>Informational Page</option>
+            <option value="blog">Blog Post</option>
+            <option value="product">Product Page</option>
+            <option value="category">Category / Listing Page</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="primaryKeyword">Primary keyword</label>
+          <input type="text" id="primaryKeyword" placeholder="e.g. commercial roof repair">
+        </div>
+        <div class="field">
+          <label for="secondaryKeywords">Secondary keywords <span class="hint">(comma separated)</span></label>
+          <input type="text" id="secondaryKeywords" placeholder="e.g. flat roof repair cost, emergency roof repair">
+        </div>
+        <div class="field">
+          <label for="clientUrl" id="clientUrlLabel">Client website <span class="hint">(optional — excluded from competitor set)</span></label>
+          <input type="text" id="clientUrl" placeholder="e.g. https://www.clientsite.com">
+          <p class="hint" id="existingPageHint" hidden>We'll scrape this page's current headers and mark which of the recommended headers below are already covered vs. new copy to add.</p>
+        </div>
+        <button id="btnSearch" class="btn-primary">Find top 10 results</button>
+      </section>
+
+      <!-- Step 2: SERP selection -->
+      <section id="step2" class="step" hidden>
+        <h2>Select relevant results</h2>
+        <p class="subtle">Judge each result from an intent standpoint — check the ones that genuinely compete for this keyword.</p>
+        <div id="serpList" class="serp-list"></div>
+        <div class="actions">
+          <button class="btn-secondary" id="btnBackTo1">Back</button>
+          <button class="btn-primary" id="btnAnalyze">Analyze selected pages</button>
+        </div>
+      </section>
+
+      <!-- Step 3: Headers + TF-IDF + FAQ candidates -->
+      <section id="step3" class="step" hidden>
+        <h2>Review headers &amp; key terms</h2>
+        <div id="pageWarnings" class="warning-banner" hidden></div>
+        <div id="existingPageWarning" class="warning-banner" hidden></div>
+        <div id="existingPageLegend" class="existing-legend" hidden>
+          <span class="new-badge">NEW</span> = not on the existing page yet — everything else is already there.
+        </div>
+        <div id="contentBenchmarks" class="benchmarks-banner" hidden></div>
+
+        <div class="outline-columns">
+          <div class="outline-col outline-col-main">
+            <div class="section-header-row">
+              <h3>Recommended outline</h3>
+              <button class="btn-secondary" id="btnAiOutline">Generate with AI</button>
+            </div>
+            <p class="subtle">Drag to reorder, or remove what you don't want.</p>
+            <div class="header-row h1-row">
+              <span class="level-badge level-H1">H1</span>
+              <input type="text" id="h1Input" class="header-text-input" placeholder="Page H1">
+            </div>
+            <div id="headerList" class="header-list dropzone"></div>
+          </div>
+
+          <div class="outline-col outline-col-alt">
+            <h3>Alternate headers</h3>
+            <p class="subtle">Covered by fewer competitors — drag into the outline to add.</p>
+            <div id="alternateHeaderList" class="header-list alternate-list dropzone scrollable"></div>
+          </div>
+
+          <div class="outline-col outline-col-side">
+            <h3>Top TF-IDF terms</h3>
+            <p class="subtle">How many times competitors used each term — a target range for your draft.</p>
+            <div id="tfidfList" class="tfidf-list scrollable"></div>
+          </div>
+        </div>
+
+        <h3>FAQ candidates <span class="hint">(select the ones to include)</span></h3>
+        <div id="faqCandidateList" class="faq-candidate-list"></div>
+        <div class="actions">
+          <button class="btn-secondary" id="btnBackTo2">Back</button>
+          <button class="btn-primary" id="btnBuildOutline">Build outline</button>
+        </div>
+      </section>
+
+      <!-- Step 4: Outline builder -->
+      <section id="step4" class="step" hidden>
+        <h2>Build your outline</h2>
+        <div class="field">
+          <label for="outlineTitle">Title tag</label>
+          <input type="text" id="outlineTitle">
+        </div>
+        <div class="field">
+          <label for="outlineH1">H1</label>
+          <input type="text" id="outlineH1">
+        </div>
+        <h3>Content headers</h3>
+        <div id="outlineRows" class="outline-rows"></div>
+        <h3>FAQs</h3>
+        <div id="outlineFaqRows" class="outline-faq-rows"></div>
+        <button class="btn-secondary" id="btnAddFaq">+ Add FAQ</button>
+        <div class="actions">
+          <button class="btn-secondary" id="btnBackTo3">Back</button>
+          <button class="btn-primary" id="btnGenerate">Generate outline</button>
+        </div>
+      </section>
+
+      <!-- Step 5: Export -->
+      <section id="step5" class="step" hidden>
+        <h2>Export</h2>
+        <div class="export-layout">
+          <div class="export-card">
+            <div class="export-card-label">Preview</div>
+            <div id="outlinePreview" class="outline-preview"></div>
+          </div>
+          <div class="export-card">
+            <div class="export-card-label">Markdown source <span class="hint">(editable — the preview updates as you type)</span></div>
+            <textarea id="outlineOutput" class="outline-output" spellcheck="false"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary" id="btnStartOver">Start over</button>
+          <button class="btn-secondary" id="btnCopy">Copy markdown</button>
+          <button class="btn-secondary" id="btnDownload">Download .md</button>
+          <button class="btn-primary" id="btnDownloadDocx">Download .docx</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
